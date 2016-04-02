@@ -1,6 +1,6 @@
 function WebGLBLAS(){
 	this.render = function() {
-		window.requestAnimationFrame(render, canvas);
+		//window.requestAnimationFrame(render, canvas);
 		gl.enable(gl.CULL_FACE);
 		gl.clearColor(0.0, 0.0, 0.0, 1.0);
 		gl.clear(gl.COLOR_BUFFER_BIT);
@@ -18,7 +18,7 @@ function WebGLBLAS(){
 		gl.vertexAttribPointer(texturePosition, 2, gl.FLOAT, false, 0, 0);
 
 		gl.activeTexture(gl.TEXTURE0);
-		gl.bindTexture(gl.TEXTURE_2D, cubeTexture);
+		gl.bindTexture(gl.TEXTURE_2D, texture);
 		gl.uniform1i(gl.getUniformLocation(program, "uSampler"), 0);
 
 		gl.drawArrays(gl.TRIANGLES, 0, 6);
@@ -94,18 +94,11 @@ function WebGLBLAS(){
 	gl.useProgram(program);
 
 	//load the texture
-	var initTextures = function() {
-		cubeTexture = gl.createTexture();
-		cubeImage = new Image();
-		cubeImage.onload = function() { handleTextureLoaded(cubeImage, cubeTexture); }
-		cubeImage.src = "cubetexture.png";
-	}
-
-	var handleTextureLoaded = function(image, texture) {
-		console.log("handleTextureLoaded, image = " + image);
+	var initTextures = function(array) {
+		var data = new Uint8Array(array);
+		texture = gl.createTexture();
 		gl.bindTexture(gl.TEXTURE_2D, texture);
-		gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, gl.RGBA,
-		gl.UNSIGNED_BYTE, image);
+		gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, 1, 1, 0, gl.RGBA, gl.UNSIGNED_BYTE, data);
 		//use nearest-neighbour interpolation to avoid blurring errors
 		gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.NEAREST);
 		gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.NEAREST);
@@ -113,8 +106,13 @@ function WebGLBLAS(){
 		gl.bindTexture(gl.TEXTURE_2D, null);
 	}
 
-	initTextures();
-
 	//run the thing
-	this.render();
+	//render();
+
+	this.scale = function(array, scalar){
+		console.log(array, scalar);
+		initTextures(array);
+		render();
+	}
+	return this;
 };
