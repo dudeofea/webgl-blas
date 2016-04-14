@@ -22,7 +22,7 @@ function WebGLBLAS(){
 		gl.bindTexture(gl.TEXTURE_2D, texture);
 		gl.uniform1i(gl.getUniformLocation(shader_program, "uSampler"), 0);
 
-		//gl.drawArrays(gl.TRIANGLES, 0, 6);
+		gl.drawArrays(gl.TRIANGLES, 0, 6);
 		gl.flush();
 	}
 
@@ -30,8 +30,8 @@ function WebGLBLAS(){
 	var canvas = document.getElementById('test-canvas');
 	//make WebGL context and keep data buffers so we can read them
 	var gl = canvas.getContext('experimental-webgl', {preserveDrawingBuffer: true});
-	canvas.width  = 4;
-	canvas.height = 4;
+	canvas.width  = 512;
+	canvas.height = 512;
 	gl.viewport(0, 0, gl.drawingBufferWidth, gl.drawingBufferHeight);
 
 	//init the vertices for a square taking up the whole screen
@@ -52,15 +52,17 @@ function WebGLBLAS(){
 	//init the vertices on the texture to draw corresponding with the above position vertices
 	var texVertexBuffer = gl.createBuffer();
 	gl.bindBuffer(gl.ARRAY_BUFFER, texVertexBuffer);
+	//draw upside down to fix problem with webgl
 	gl.bufferData(
 		gl.ARRAY_BUFFER,
 		new Float32Array([
-		0.0, 0.0,		//top left
 			0.0, 1.0,		//bottom left
-			1.0, 0.0,		//top right
-			0.0, 1.0,		//bottom left
+			0.0, 0.0,		//top left
 			1.0, 1.0,		//bottom right
-			1.0, 0.0		//top right
+
+			0.0, 0.0,		//top left
+			1.0, 0.0,		//top right
+			1.0, 1.0		//bottom right
 		]), gl.STATIC_DRAW
 	);
 
@@ -80,7 +82,7 @@ function WebGLBLAS(){
     uniform sampler2D uSampler;			//our sampler for the texture
 	void main() {
 		//just sample the texture directly
-		gl_FragColor = texture2D(uSampler, vec2(vTextureCoord.s, vTextureCoord.t));
+		gl_FragColor = 2.0 * texture2D(uSampler, vec2(vTextureCoord.s, vTextureCoord.t));
 	}`;
 	var vertexShader = gl.createShader(gl.VERTEX_SHADER);
 	gl.shaderSource(vertexShader, vertexSource);
@@ -113,6 +115,7 @@ function WebGLBLAS(){
 	//run the thing
 	//render();
 
+	//currently works for any array smaller than (512*512) = 262144
 	this.scale = function(array, scalar){
 		console.log(array, scalar);
 		var pow2 = Math.ceil(Math.log(array.length)/Math.log(2))
@@ -122,16 +125,12 @@ function WebGLBLAS(){
 		var data = new Uint8Array(target_size);
 		var i = array.length;
 		while(i--) { data[i] = array[i]; }
-		console.log(data.slice());
+		//console.log(data.slice());
 		//make texture and run the thing
 		initTextures(data, canvas.width, canvas.height);
 		render(program);
-		var b = new Uint8Array(4);
-		gl.readPixels(0, 0, 1, 1, gl.RGBA, gl.UNSIGNED_BYTE, b);
-		// var b = new Array(array.length);
-		// var i = array.length;
-		// while(i--) { b[i] = data[i]; }
-		console.log(b);
+		gl.readPixels(0, 0, canvas.width, canvas.height, gl.RGBA, gl.UNSIGNED_BYTE, data);
+		return data.slice(0, array.length);
 	}
 	return this;
 };
